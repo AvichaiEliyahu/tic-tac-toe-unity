@@ -16,7 +16,12 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: 28b1eec03f64fc542915c2fd6192ea02
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: aaccb886a39b00948bb3afb392c28275
+    m_Address: Assets/Sprites/TicTacToeAssets.png
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 97a77c5ec5fcde84ba892885e8d0ddae, type: 2}
   m_SchemaSet:
