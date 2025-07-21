@@ -18,6 +18,10 @@ public class MyGameManager : IGameManager
     private CellState _currentMark;
     private Transform _boardParent;
 
+    private GameResult _gameResult;
+    private ScoreSystem _scoreSystem;
+
+
     public MyGameManager(Transform boardParent)
     {
         _boardParent = boardParent;
@@ -25,18 +29,43 @@ public class MyGameManager : IGameManager
 
     public int GetFinalScore()
     {
-        throw new NotImplementedException();
+        return _scoreSystem.CalcFinalScore(_gameResult);
     }
 
     public async UniTask LoadNewGameAsync(bool? isUserFirstTurn = null)
     {
         IsGameInProgress = true;
         _boardModel = new BoardModel(GameConsts.BOARD_SIZE);
+        _scoreSystem = new ScoreSystem();
 
+        TryClearPrevBoard();
+
+        await InitializeNewBoard();
+
+        InitializePlayers(isUserFirstTurn);
+    }
+
+    #region New Game Initialization
+    private void TryClearPrevBoard()
+    {
+        if (_boardView == null)
+        {
+            return;
+        }
+        _boardView.DestroyBoard();
+        Addressables.ReleaseInstance(_boardView.gameObject);
+        GameObject.Destroy(_boardView.gameObject);
+    }
+
+    private async UniTask InitializeNewBoard()
+    {
         var boardGo = await Addressables.InstantiateAsync(GameConsts.BOARD_VIEW_ADDRESSABLES_KEY, _boardParent);
         _boardView = boardGo.GetComponent<BoardView>();
         await _boardView.InitializeAsync();
+    }
 
+    private void InitializePlayers(bool? isUserFirstTurn)
+    {
         _playerX = new HumanPlayer();
         _playerO = new BotPlayer();
 
@@ -44,6 +73,8 @@ public class MyGameManager : IGameManager
         _currentPlayer = humanStarts ? _playerX : _playerO;
         _currentMark = _currentPlayer == _playerX ? CellState.PlayerX : CellState.PlayerO;
     }
+
+    #endregion
 
     public async UniTask WaitForPlayerTurn()
     {
@@ -54,6 +85,7 @@ public class MyGameManager : IGameManager
         UpdateModelBasedOnMove(move);
     }
 
+    #region Play Turn
     private async UniTask<(int x, int y)> WaitForMove(bool[,] availableCells)
     {
         if (_currentPlayer is BotPlayer)
@@ -62,7 +94,10 @@ public class MyGameManager : IGameManager
         }
         else
         {
-            return await _boardView.WaitForPress(availableCells);
+            _scoreSystem.StartTurn();
+            var move = await _boardView.WaitForPress(availableCells);
+            _scoreSystem.EndTurn();
+            return move;
         }
     }
 
@@ -71,9 +106,10 @@ public class MyGameManager : IGameManager
         if (_boardModel.PlaceMarkOnCell(move.x, move.y, _currentMark))
         {
             _boardView.DrawBoard(_boardModel.Cells);
-            var result = _boardModel.CheckGameResult(out var winner);
+            var result = _boardModel.CheckGameResult(CellState.PlayerX, out var winner);
             if (result != GameResult.None)
             {
+                _gameResult = result;
                 IsGameInProgress = false;
                 OnGameOver?.Invoke();
                 return;
@@ -85,4 +121,5 @@ public class MyGameManager : IGameManager
                 (_playerX, CellState.PlayerX);
         }
     }
+    #endregion
 }

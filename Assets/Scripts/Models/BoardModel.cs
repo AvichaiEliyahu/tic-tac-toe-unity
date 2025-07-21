@@ -1,5 +1,5 @@
 public enum CellState { Empty, PlayerX, PlayerO}
-public enum GameResult { None, Win, Draw}
+public enum GameResult { None, Win, Lose, Draw}
 
 public class BoardModel
 {
@@ -55,7 +55,7 @@ public class BoardModel
                 Cells[x, y] = CellState.Empty;
     }
 
-    public GameResult CheckGameResult(out CellState winner)
+    public GameResult CheckGameResult(CellState humanMark, out CellState winner)
     {
         winner = CellState.Empty;
 
@@ -77,7 +77,7 @@ public class BoardModel
                 if (rowWin)
                 {
                     winner = Cells[i, 0];
-                    return GameResult.Win;
+                    return winner == humanMark ? GameResult.Win : GameResult.Lose;
                 }
             }
 
@@ -96,7 +96,7 @@ public class BoardModel
                 if (colWin)
                 {
                     winner = Cells[0, i];
-                    return GameResult.Win;
+                    return winner == humanMark ? GameResult.Win : GameResult.Lose;
                 }
             }
         }
@@ -116,7 +116,7 @@ public class BoardModel
             if (diagWin)
             {
                 winner = Cells[0, 0];
-                return GameResult.Win;
+                return winner == humanMark ? GameResult.Win : GameResult.Lose;
             }
         }
 
@@ -135,7 +135,7 @@ public class BoardModel
             if (antiDiagWin)
             {
                 winner = Cells[0, _size - 1];
-                return GameResult.Win;
+                return winner == humanMark ? GameResult.Win : GameResult.Lose;
             }
         }
 
@@ -159,4 +159,5 @@ public class BoardModel
 
         return GameResult.None;
     }
+
 }
