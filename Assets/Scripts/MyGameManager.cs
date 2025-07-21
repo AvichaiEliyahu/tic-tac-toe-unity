@@ -150,7 +150,7 @@ public class MyGameManager : IGameManager
         }
     }
 
-    public int TotalScore => _saveManager.GetSaveData().TotalScore;
+    public int TotalScore => _saveManager?.GetSaveData()?.TotalScore ?? 0;
 
     #endregion
 }
