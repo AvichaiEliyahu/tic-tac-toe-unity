@@ -8,12 +8,12 @@ public class CellView : MonoBehaviour
     [SerializeField] private Button _button;
 
     Action<CellView> _onClick;
+
     public Vector2Int GridPosition { get; private set; }
 
-    public void Initialize(Vector2Int position, Action<CellView> onClick)
+    public void Initialize(Vector2Int position)
     {
         GridPosition = position;
-        _onClick = onClick;
         InitializeButton();
         if (_image == null)
         {
@@ -21,7 +21,12 @@ public class CellView : MonoBehaviour
         }
     }
 
-    public void SetSprite(Sprite sprite)
+    public void SetClickCallback(Action<CellView> callback)
+    {
+        _onClick = callback;
+    }
+
+    public void SetState(Sprite sprite)
     {
         _image.sprite = sprite;
     }

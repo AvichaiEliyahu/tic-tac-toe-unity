@@ -22,6 +22,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 721d3d561a12ead49ba1d9e0a367fa51
+    m_Address: Assets/Prefabs/Board.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 97a77c5ec5fcde84ba892885e8d0ddae, type: 2}
   m_SchemaSet:
