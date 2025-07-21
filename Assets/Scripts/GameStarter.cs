@@ -13,12 +13,12 @@ public class GameStarter : MonoBehaviour
     {
         _gameManager = new MyGameManager(_boardParent);
         StartGameLoop().Forget();
-        _ui.Initialize(() => StartGameLoop().Forget());
+        _ui.Initialize(() => StartGameLoop().Forget(), GetTotalScore());
     }
 
     private async UniTaskVoid StartGameLoop()
     {
-        _ui.HideReplayView();
+        _ui.HideEndGameScreen();
         await _gameManager.LoadNewGameAsync(true);
         _gameManager.OnGameOver += OnGameEnd;
         while (_gameManager.IsGameInProgress)
@@ -29,7 +29,18 @@ public class GameStarter : MonoBehaviour
 
     private void OnGameEnd()
     {
-        _ui.ShowReplayView(score: _gameManager.GetFinalScore());
+        UpdateUI();
         _gameManager.OnGameOver -= OnGameEnd;        
+    }
+
+    private void UpdateUI()
+    {
+        _ui.ShowEndGameScreen(score: _gameManager.GetFinalScore());
+        _ui.UpdateTotalScoreText(GetTotalScore());
+    }
+
+    private int GetTotalScore()
+    {
+        return (_gameManager as MyGameManager).TotalScore; // I don't like it but since IGameManager interface can not be changed I choose to do this.
     }
 }

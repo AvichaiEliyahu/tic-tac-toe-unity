@@ -14,45 +14,29 @@ public class MyGameManager : IGameManager
     private BoardView _boardView;
     private Transform _boardParent;
 
-    private GameResult _gameResult;
     private ScoreSystem _scoreSystem;
     private PlayerManager _playerManager;
+    private SaveManager _saveManager;
 
-    private ISaveSystem<GameSaveData> _saveSystem;
-    private GameSaveData _gameSaveData;
-    private const string GAME_SAVE_KEY = "CurrentGameSave";
-
+    private int _gameScore;
 
     public MyGameManager(Transform boardParent)
     {
         _boardParent = boardParent;
-        InitializeSaveSystem();
+        _saveManager = new SaveManager();
     }
 
-    private void InitializeSaveSystem()
-    {
-#if UNITY_EDITOR
-        _saveSystem = new FileSaveSystem<GameSaveData>();
-#else
-    _saveSystem = new PlayerPrefsSaveSystem<GameSaveData>();
-#endif
-
-    }
     public int GetFinalScore()
     {
-        return _scoreSystem.CalcFinalScore(_gameResult);
+        return _gameScore;
     }
 
     public async UniTask LoadNewGameAsync(bool? isUserFirstTurn = null)
     {
-        if (_saveSystem.HasKey(GAME_SAVE_KEY))
+        if (_saveManager.HasSavedgameInProgress())
         {
-            _gameSaveData = _saveSystem.Load(GAME_SAVE_KEY);
-            if (_gameSaveData.IsGameInProgress)
-            {
-                await LoadFromSave(_gameSaveData);
-                return;
-            }
+            await LoadFromSave(_saveManager.GetSaveData());
+            return;
         }
         await StartNewGame(isUserFirstTurn);
     }
@@ -84,12 +68,14 @@ public class MyGameManager : IGameManager
         IsGameInProgress = true;
     }
 
-    private void SaveGame()
+    private void SaveGame(int addScore = 0)
     {
-        var data = new GameSaveData(_boardModel, IsGameInProgress, _playerManager.CurrentMark, CellState.PlayerX, _scoreSystem.GetCurrentReactionTimes());
-        data.TotalScore = _gameSaveData?.TotalScore ?? 0;
-        _saveSystem.Save(GAME_SAVE_KEY, data);
-        _gameSaveData = data;
+        var currentSave = _saveManager.GetSaveData() ?? new GameSaveData();
+        var newData = new GameSaveData(_boardModel, IsGameInProgress, _playerManager.CurrentMark, CellState.PlayerX, _scoreSystem.GetCurrentReactionTimes())
+        {
+            TotalScore = currentSave.TotalScore + addScore
+        };
+        _saveManager.Save(newData);
     }
 
     #region New Game Initialization
@@ -152,10 +138,10 @@ public class MyGameManager : IGameManager
             var result = _boardModel.CheckGameResult(CellState.PlayerX, out var winner);
             if (result != GameResult.None)
             {
-                _gameResult = result;
                 IsGameInProgress = false;
-                UpdateScoreOnGameOver();
-                SaveGame();
+                _gameScore = _scoreSystem.CalcFinalScore(result);
+                
+                SaveGame(_gameScore);
                 OnGameOver?.Invoke();
                 return;
             }
@@ -164,9 +150,7 @@ public class MyGameManager : IGameManager
         }
     }
 
-    private void UpdateScoreOnGameOver()
-    {
-        _gameSaveData.TotalScore += _scoreSystem.CalcFinalScore(_gameResult);
-    }
+    public int TotalScore => _saveManager.GetSaveData().TotalScore;
+
     #endregion
 }

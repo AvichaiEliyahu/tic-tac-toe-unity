@@ -10,21 +10,26 @@ public class GameUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _totalScoreText;
     [SerializeField] private GameObject _endGameScreen;
 
-    public void Initialize(Action onPress)
+    public void Initialize(Action onPress, int totalScore)
     {
         _replayButton.onClick.RemoveAllListeners();
         _replayButton.onClick.AddListener(() => onPress?.Invoke());
+        UpdateTotalScoreText(totalScore);
     }
 
-    public void ShowReplayView(int score)
+    public void ShowEndGameScreen(int score)
     {
         _endGameScreen.SetActive(true);
         _gameScoreText.SetText($"Game Score\n{score}");
     }
 
-    public void HideReplayView()
+    public void HideEndGameScreen()
     {
         _endGameScreen.SetActive(false);
     }
 
+    public void UpdateTotalScoreText(int totalScore)
+    {
+        _totalScoreText.SetText($"Score: {totalScore}");
+    }
 }
