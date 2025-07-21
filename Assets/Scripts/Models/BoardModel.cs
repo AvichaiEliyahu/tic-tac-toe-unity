@@ -4,6 +4,7 @@ public enum GameResult { None, Win, Lose, Draw}
 public class BoardModel
 {
     private readonly int _size;
+
     public CellState[,] Cells { get; private set; }
 
     public int Size => _size;
@@ -13,6 +14,11 @@ public class BoardModel
         _size = size;
         Cells = new CellState[size, size];
         ClearBoard();
+    }
+
+    public BoardModel(int size, CellState[,] cellStates) : this(size)
+    {
+        Cells = cellStates;
     }
 
     public CellState GetCellState(int x, int y)

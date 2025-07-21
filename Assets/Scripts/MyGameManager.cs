@@ -12,21 +12,32 @@ public class MyGameManager : IGameManager
 
     private BoardModel _boardModel;
     private BoardView _boardView;
-    private IPlayer _playerX;
-    private IPlayer _playerO;
-    private IPlayer _currentPlayer;
-    private CellState _currentMark;
     private Transform _boardParent;
 
     private GameResult _gameResult;
     private ScoreSystem _scoreSystem;
+    private PlayerManager _playerManager;
+
+    private ISaveSystem<GameSaveData> _saveSystem;
+    private GameSaveData _gameSaveData;
+    private const string GAME_SAVE_KEY = "CurrentGameSave";
 
 
     public MyGameManager(Transform boardParent)
     {
         _boardParent = boardParent;
+        InitializeSaveSystem();
     }
 
+    private void InitializeSaveSystem()
+    {
+#if UNITY_EDITOR
+        _saveSystem = new FileSaveSystem<GameSaveData>();
+#else
+    _saveSystem = new PlayerPrefsSaveSystem<GameSaveData>();
+#endif
+
+    }
     public int GetFinalScore()
     {
         return _scoreSystem.CalcFinalScore(_gameResult);
@@ -34,8 +45,23 @@ public class MyGameManager : IGameManager
 
     public async UniTask LoadNewGameAsync(bool? isUserFirstTurn = null)
     {
+        if (_saveSystem.HasKey(GAME_SAVE_KEY))
+        {
+            _gameSaveData = _saveSystem.Load(GAME_SAVE_KEY);
+            if (_gameSaveData.IsGameInProgress)
+            {
+                await LoadFromSave(_gameSaveData);
+                return;
+            }
+        }
+        await StartNewGame(isUserFirstTurn);
+    }
+
+    private async UniTask StartNewGame(bool? isUserFirstTurn)
+    {
         IsGameInProgress = true;
         _boardModel = new BoardModel(GameConsts.BOARD_SIZE);
+        _playerManager = new PlayerManager();
         _scoreSystem = new ScoreSystem();
 
         TryClearPrevBoard();
@@ -43,6 +69,27 @@ public class MyGameManager : IGameManager
         await InitializeNewBoard();
 
         InitializePlayers(isUserFirstTurn);
+        SaveGame();
+    }
+
+    private async UniTask LoadFromSave(GameSaveData data)
+    {
+        _boardModel = new BoardModel(data.BoardSize, data.Get2DBoard());
+        _scoreSystem = new ScoreSystem(data.ReactionTimes);
+        _playerManager = new PlayerManager();
+        _playerManager.InitializePlayers(data.PlayerMark == CellState.PlayerX);
+        TryClearPrevBoard();
+        await InitializeNewBoard();
+        _boardView.DrawBoard(_boardModel.Cells);
+        IsGameInProgress = true;
+    }
+
+    private void SaveGame()
+    {
+        var data = new GameSaveData(_boardModel, IsGameInProgress, _playerManager.CurrentMark, CellState.PlayerX, _scoreSystem.GetCurrentReactionTimes());
+        data.TotalScore = _gameSaveData?.TotalScore ?? 0;
+        _saveSystem.Save(GAME_SAVE_KEY, data);
+        _gameSaveData = data;
     }
 
     #region New Game Initialization
@@ -66,12 +113,8 @@ public class MyGameManager : IGameManager
 
     private void InitializePlayers(bool? isUserFirstTurn)
     {
-        _playerX = new HumanPlayer();
-        _playerO = new BotPlayer();
-
         bool humanStarts = isUserFirstTurn ?? UnityEngine.Random.value > 0.5;
-        _currentPlayer = humanStarts ? _playerX : _playerO;
-        _currentMark = _currentPlayer == _playerX ? CellState.PlayerX : CellState.PlayerO;
+        _playerManager.InitializePlayers(humanStarts);
     }
 
     #endregion
@@ -81,16 +124,16 @@ public class MyGameManager : IGameManager
         var availableCells = _boardModel.GetAvailableCells();
 
         var move = await WaitForMove(availableCells);
-
         UpdateModelBasedOnMove(move);
+        SaveGame();
     }
 
     #region Play Turn
     private async UniTask<(int x, int y)> WaitForMove(bool[,] availableCells)
     {
-        if (_currentPlayer is BotPlayer)
+        if (_playerManager.CurrentPlayer is BotPlayer)
         {
-            return await _currentPlayer.PlayAsync(availableCells);
+            return await _playerManager.CurrentPlayer.PlayAsync(availableCells);
         }
         else
         {
@@ -103,7 +146,7 @@ public class MyGameManager : IGameManager
 
     private void UpdateModelBasedOnMove((int x, int y) move)
     {
-        if (_boardModel.PlaceMarkOnCell(move.x, move.y, _currentMark))
+        if (_boardModel.PlaceMarkOnCell(move.x, move.y, _playerManager.CurrentMark))
         {
             _boardView.DrawBoard(_boardModel.Cells);
             var result = _boardModel.CheckGameResult(CellState.PlayerX, out var winner);
@@ -111,15 +154,19 @@ public class MyGameManager : IGameManager
             {
                 _gameResult = result;
                 IsGameInProgress = false;
+                UpdateScoreOnGameOver();
+                SaveGame();
                 OnGameOver?.Invoke();
                 return;
             }
 
-            (_currentPlayer, _currentMark) =
-                _currentPlayer == _playerX ?
-                (_playerO, CellState.PlayerO) :
-                (_playerX, CellState.PlayerX);
+            _playerManager.SwitchTurn();
         }
+    }
+
+    private void UpdateScoreOnGameOver()
+    {
+        _gameSaveData.TotalScore += _scoreSystem.CalcFinalScore(_gameResult);
     }
     #endregion
 }

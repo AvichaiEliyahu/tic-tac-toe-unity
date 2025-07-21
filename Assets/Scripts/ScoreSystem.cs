@@ -17,6 +17,16 @@ public class ScoreSystem
     private readonly List<float> _reactionTimes = new();
     private float _turnStartTime;
 
+
+    public ScoreSystem(List<float> reactionTimes)
+    {
+        _reactionTimes = reactionTimes;
+    }
+
+    public ScoreSystem()
+    {
+    }
+
     public void StartTurn()
     {
         _turnStartTime = Time.time;
@@ -51,5 +61,10 @@ public class ScoreSystem
 
         float t = Mathf.InverseLerp(SLOW_TURN_TIME, FAST_TURN_TIME, averageReactionTime);
         return Mathf.RoundToInt(Mathf.Lerp(minScore, maxScore, t));
+    }
+
+    public List<float> GetCurrentReactionTimes()
+    {
+        return _reactionTimes;
     }
 }
