@@ -1,20 +1,16 @@
 using Cysharp.Threading.Tasks;
 
-public class HumanPlayer : IPlayer, IClickablePlayer
+public class HumanPlayer : IPlayer, IRecordablePlayer
 {
-    private UniTaskCompletionSource<(int x, int y)> _tcs;
+    private BoardView _boardView;
 
-    public UniTask<(int x, int y)> PlayAsync(bool[,] availableCells)
+    public HumanPlayer(BoardView boardView)
     {
-        _tcs = new();
-        return _tcs.Task;
+        _boardView = boardView;
     }
 
-    public void OnCellClicked(int x, int y)
+    public async UniTask<(int x, int y)> PlayAsync(bool[,] availableCells)
     {
-        if(_tcs != null)
-        {
-            _tcs.TrySetResult((x, y));
-        }
+        return await _boardView.WaitForPress(availableCells);
     }
 }

@@ -20,6 +20,7 @@ public class GameStarter : MonoBehaviour
         _ui.Initialize(() => StartGameLoop().Forget(), GetTotalScore());
     }
 
+
     private async UniTaskVoid StartGameLoop()
     {
         try
@@ -32,9 +33,8 @@ public class GameStarter : MonoBehaviour
                 await _gameManager.WaitForPlayerTurn();
             }
         }
-        catch (OperationCanceledException e)
+        catch (OperationCanceledException)
         {
-            Debug.LogError(e);
         }
     }
 
@@ -52,7 +52,7 @@ public class GameStarter : MonoBehaviour
 
     private int GetTotalScore()
     {
-        return (_gameManager as MyGameManager).TotalScore; // I don't like this but since IGameManager interface can not be changed I choose to do this.
+        return (_gameManager as MyGameManager).TotalScore; // Like the instructions say I did not modify the interface but extended it internally in my implementation.
     }
 
     private void OnDestroy()

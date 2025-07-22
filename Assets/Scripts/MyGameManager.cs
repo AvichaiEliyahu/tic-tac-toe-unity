@@ -36,41 +36,29 @@ public class MyGameManager : IGameManager
 
     public async UniTask LoadNewGameAsync(bool? isUserFirstTurn = null)
     {
+        await InitializeNewBoard().AttachExternalCancellation(_cancellationToken);
+        IsGameInProgress = true;
+        _playerManager = new PlayerManager(new HumanPlayer(_boardView), new BotPlayer());
+
         if (_saveManager.HasSavedgameInProgress())
         {
-            await LoadFromSave(_saveManager.GetSaveData()).AttachExternalCancellation(_cancellationToken);
-            return;
+            var data = _saveManager.GetSaveData();
+            _boardModel = new BoardModel(data.BoardSize, data.Get2DBoard());
+            _scoreManager = new ScoreManager(data.ReactionTimes);
+            _playerManager.InitializePlayers(data.PlayerMark == CellState.PlayerX);
+            _boardView.DrawBoard(_boardModel.Cells);
         }
-        await StartNewGame(isUserFirstTurn).AttachExternalCancellation(_cancellationToken);
+        else
+        {
+            _boardModel = new BoardModel(GameConsts.BOARD_SIZE);
+            _scoreManager = new ScoreManager();
+            bool humanStarts = isUserFirstTurn ?? UnityEngine.Random.value > 0.5;
+            _playerManager.InitializePlayers(humanStarts);
+            SaveGame();
+        }
     }
 
-    private async UniTask StartNewGame(bool? isUserFirstTurn)
-    {
-        IsGameInProgress = true;
-        _boardModel = new BoardModel(GameConsts.BOARD_SIZE);
-        _playerManager = new PlayerManager();
-        _scoreManager = new ScoreManager();
-
-        TryClearPrevBoard();
-
-        await InitializeNewBoard().AttachExternalCancellation(_cancellationToken);
-
-        InitializePlayers(isUserFirstTurn);
-        SaveGame();
-    }
-
-    #region Save and Load
-    private async UniTask LoadFromSave(GameSaveData data)
-    {
-        _boardModel = new BoardModel(data.BoardSize, data.Get2DBoard());
-        _scoreManager = new ScoreManager(data.ReactionTimes);
-        _playerManager = new PlayerManager();
-        _playerManager.InitializePlayers(data.PlayerMark == CellState.PlayerX);
-        TryClearPrevBoard();
-        await InitializeNewBoard().AttachExternalCancellation(_cancellationToken);
-        _boardView.DrawBoard(_boardModel.Cells);
-        IsGameInProgress = true;
-    }
+    #region Save
 
     private void SaveGame(int addScore = 0)
     {
@@ -82,6 +70,7 @@ public class MyGameManager : IGameManager
         _saveManager.Save(newData);
     }
     #endregion
+
     #region New Game Initialization
     private void TryClearPrevBoard()
     {
@@ -96,6 +85,7 @@ public class MyGameManager : IGameManager
 
     private async UniTask InitializeNewBoard()
     {
+        TryClearPrevBoard();
         var boardGo = await Addressables.InstantiateAsync(GameConsts.BOARD_VIEW_ADDRESSABLES_KEY, _boardParent).WithCancellation(_cancellationToken);
         _boardView = boardGo.GetComponent<BoardView>();
         await _boardView.InitializeAsync().AttachExternalCancellation(_cancellationToken);
@@ -113,26 +103,31 @@ public class MyGameManager : IGameManager
     {
         var availableCells = _boardModel.GetAvailableCells();
 
-        var move = await WaitForMove(availableCells).AttachExternalCancellation(_cancellationToken);
+        TryStartTurnRecording();
+        var move = await _playerManager.CurrentPlayer.PlayAsync(availableCells).AttachExternalCancellation(_cancellationToken);
+        TryEndTurnRecording();
+
         UpdateModelBasedOnMove(move);
         SaveGame();
     }
 
-    #region Play Turn
-    private async UniTask<(int x, int y)> WaitForMove(bool[,] availableCells)
+    private void TryStartTurnRecording()
     {
-        if (_playerManager.CurrentPlayer is BotPlayer)
-        {
-            return await _playerManager.CurrentPlayer.PlayAsync(availableCells).AttachExternalCancellation(_cancellationToken);
-        }
-        else
+        if(_playerManager.CurrentPlayer is IRecordablePlayer)
         {
             _scoreManager.StartTurn();
-            var move = await _boardView.WaitForPress(availableCells).AttachExternalCancellation(_cancellationToken);
-            _scoreManager.EndTurn();
-            return move;
         }
     }
+
+    private void TryEndTurnRecording()
+    {
+        if(_playerManager.CurrentPlayer is IRecordablePlayer)
+        {
+            _scoreManager.EndTurn();
+        }
+    }
+
+    #region Play Turn
 
     private void UpdateModelBasedOnMove((int x, int y) move)
     {

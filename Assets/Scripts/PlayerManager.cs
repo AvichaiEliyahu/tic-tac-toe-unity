@@ -9,10 +9,14 @@ public class PlayerManager
     public IPlayer CurrentPlayer => _currentPlayer;
     public CellState CurrentMark => _currentPlayer == _playerX ? CellState.PlayerX : CellState.PlayerO;
 
+    public PlayerManager(IPlayer playerX, IPlayer playerO)
+    {
+        _playerX = playerX;
+        _playerO = playerO;
+    }
+
     public void InitializePlayers(bool playerStarts)
     {
-        _playerX = new HumanPlayer();
-        _playerO = new BotPlayer();
         _currentPlayer = playerStarts ? _playerX : _playerO;
     }
 
