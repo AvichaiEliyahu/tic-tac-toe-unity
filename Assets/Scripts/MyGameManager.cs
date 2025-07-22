@@ -22,6 +22,7 @@ public class MyGameManager : IGameManager
     private ScoreManager _scoreManager;
     private PlayerManager _playerManager;
     private SaveManager _saveManager;
+    private GameData _gameData;
 
     private int _gameScore;
     private CancellationToken _cancellationToken;
@@ -29,11 +30,12 @@ public class MyGameManager : IGameManager
     public const string BOARD_VIEW_ADDRESSABLES_KEY = "Assets/Prefabs/Board.prefab";
 
 
-    public MyGameManager(Transform boardParent, CancellationToken cancellationToken)
+    public MyGameManager(Transform boardParent, CancellationToken cancellationToken, GameData gameData)
     {
         _boardParent = boardParent;
         _saveManager = new SaveManager();
         _cancellationToken = cancellationToken;
+        _gameData = gameData;
     }
 
     /// <summary>
@@ -54,20 +56,20 @@ public class MyGameManager : IGameManager
     {
         await InitializeNewBoard().AttachExternalCancellation(_cancellationToken);
         IsGameInProgress = true;
-        _playerManager = new PlayerManager(new HumanPlayer(_boardView), new BotPlayer());
+        _playerManager = new PlayerManager(new HumanPlayer(_boardView), new BotPlayer(_gameData.BotData));
 
         if (_saveManager.HasSavedgameInProgress())
         {
             var data = _saveManager.GetSaveData();
             _boardModel = new BoardModel(data.BoardSize, data.Get2DBoard());
-            _scoreManager = new ScoreManager(data.ReactionTimes);
+            _scoreManager = new ScoreManager(_gameData.ScoringSystemData, data.ReactionTimes);
             _playerManager.InitializePlayers(data.PlayerMark == CellState.PlayerX);
             _boardView.DrawBoard(_boardModel.Cells);
         }
         else
         {
-            _boardModel = new BoardModel(GameConsts.BOARD_SIZE);
-            _scoreManager = new ScoreManager();
+            _boardModel = new BoardModel(_gameData.BoardSize);
+            _scoreManager = new ScoreManager(_gameData.ScoringSystemData);
             bool humanStarts = isUserFirstTurn ?? UnityEngine.Random.value > 0.5;
             _playerManager.InitializePlayers(humanStarts);
             SaveGame();
@@ -114,7 +116,7 @@ public class MyGameManager : IGameManager
         TryClearPrevBoard();
         var boardGo = await Addressables.InstantiateAsync(BOARD_VIEW_ADDRESSABLES_KEY, _boardParent).WithCancellation(_cancellationToken);
         _boardView = boardGo.GetComponent<BoardView>();
-        await _boardView.InitializeAsync(GameConsts.BOARD_SIZE).AttachExternalCancellation(_cancellationToken);
+        await _boardView.InitializeAsync(_gameData.BoardSize).AttachExternalCancellation(_cancellationToken);
     }
     #endregion
 

@@ -12,13 +12,15 @@ public class GameStarter : MonoBehaviour
     [SerializeField] private Transform _boardParent;
     [SerializeField] private GameUI _ui;
 
+    [SerializeField] private GameData _gameData;
+
     private IGameManager _gameManager;
     private CancellationTokenSource _cts;
 
     private void Start()
     {
         _cts = new CancellationTokenSource();
-        _gameManager = new MyGameManager(_boardParent, _cts.Token);
+        _gameManager = new MyGameManager(_boardParent, _cts.Token, _gameData);
         StartGameLoop().Forget();
         _ui.Initialize(() => StartGameLoop().Forget(), GetTotalScore());
     }

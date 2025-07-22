@@ -542,6 +542,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _boardParent: {fileID: 1377117045}
   _ui: {fileID: 1235824205734953969}
+  _gameData:
+    BoardSize: 3
+    BotData:
+      BotMinDelay: 1
+      BotMaxDelay: 3
+    ScoringSystemData:
+      WinMinScore: 50
+      WinMaxScore: 100
+      DrawMinScore: 2
+      DrawMaxScore: 49
+      LoseScore: 1
+      FastTurnTime: 10
+      SlowTurnTime: 20
 --- !u!4 &1177630958
 Transform:
   m_ObjectHideFlags: 0

@@ -8,8 +8,12 @@ using Cysharp.Threading.Tasks;
 public class BotPlayer : IPlayer
 {
     private readonly List<(int x, int y)> _validMoves = new();
-    private const int BOT_DELAY_MIN = 1;
-    private const int BOT_DELAY_MAX = 3;
+    BotData _botData;
+
+    public BotPlayer(BotData botData)
+    {
+        _botData = botData;
+    }
 
     public async UniTask<(int x, int y)> PlayAsync(bool[,] availableCells)
     {
@@ -30,7 +34,7 @@ public class BotPlayer : IPlayer
     /// <returns></returns>
     private async UniTask BotDelay()
     {
-        var delay = UnityEngine.Random.Range(BOT_DELAY_MIN * 1000, BOT_DELAY_MAX * 1000);
+        var delay = UnityEngine.Random.Range(_botData.BotMinDelay * 1000, _botData.BotMaxDelay * 1000);
         await UniTask.Delay(delay);
     }
 
