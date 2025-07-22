@@ -5,19 +5,21 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Class that handles the board view.
+/// This class contains an example for using cancellation token source from the game object itself (on destory) to cancel tasks.
 /// </summary>
 public class BoardView : MonoBehaviour
 {
-    private const string X_SPRITE_ADDRESSABLE_KEY = "Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_1]";
-    private const string O_SPRITE_ADDRESSABLE_KEY = "Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_2]";
-    private const string EMPTY_SPRITE_ADDRESSABLE_KEY = "Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_4]";
     [SerializeField] private GridLayoutGroup _grid;
     [SerializeField] private AssetReferenceT<GameObject> _cellPrefab;
-    
+
     private CellView[,] _cells;
     private Sprite _spriteX;
     private Sprite _spriteO;
     private Sprite _spriteEmptyCell;
+    
+    private const string X_SPRITE_ADDRESSABLE_KEY = "Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_1]";
+    private const string O_SPRITE_ADDRESSABLE_KEY = "Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_2]";
+    private const string EMPTY_SPRITE_ADDRESSABLE_KEY = "Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_4]";
 
     /// <summary>
     /// Initialize the board.
@@ -85,7 +87,7 @@ public class BoardView : MonoBehaviour
             for (int y = 0; y < size; y++)
             {
                 _cells[x, y].SetInteractable(availableCells[x, y]);
-                _cells[x, y].SetClickCallback(availableCells[x,y] ? OnCellClicked : null);
+                _cells[x, y].SetClickCallback(availableCells[x, y] ? OnCellClicked : null);
             }
         return await tcs.Task.AttachExternalCancellation(gameObject.GetCancellationTokenOnDestroy());
     }

@@ -5,7 +5,8 @@ using PlayPerfect;
 using UnityEngine;
 
 /// <summary>
-/// The MonoBehaviour that starts the game and controlls the game flow
+/// The MonoBehaviour that starts the game and controlls the game flow.
+/// This class contains an example for using cancellation token source to cancel tasks.
 /// </summary>
 public class GameStarter : MonoBehaviour
 {

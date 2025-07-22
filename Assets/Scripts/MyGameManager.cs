@@ -157,7 +157,6 @@ public class MyGameManager : IGameManager
         }
     }
 
-    #region Play Turn
     /// <summary>
     /// Update the model based on the latest move.
     /// </summary>
@@ -187,5 +186,4 @@ public class MyGameManager : IGameManager
     /// </summary>
     public int TotalScore => _saveManager?.GetSaveData()?.TotalScore ?? 0;
 
-    #endregion
 }
