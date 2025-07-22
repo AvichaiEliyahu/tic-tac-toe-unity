@@ -1,9 +1,12 @@
 using System;
 
+/// <summary>
+/// A class with data for the different game components
+/// </summary>
 [Serializable]
 public class GameData
 {
-    public int BoardSize = 3;
+    public int BoardSize = 3; // no assets for different board size
     public BotData BotData;
     public ScoringSystemData ScoringSystemData;
 }
