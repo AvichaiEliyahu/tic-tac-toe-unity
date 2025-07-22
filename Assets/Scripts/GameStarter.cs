@@ -13,6 +13,7 @@ public class GameStarter : MonoBehaviour
     [SerializeField] private GameUI _ui;
 
     [SerializeField] private GameData _gameData;
+    [SerializeField] private bool _isUserStart = true;
 
     private IGameManager _gameManager;
     private CancellationTokenSource _cts;
@@ -34,7 +35,7 @@ public class GameStarter : MonoBehaviour
         try
         {
             _ui.HideEndGameScreen();
-            await _gameManager.LoadNewGameAsync(true);
+            await _gameManager.LoadNewGameAsync(_isUserStart);
             _gameManager.OnGameOver += OnGameEnd;
             while (_gameManager.IsGameInProgress)
             {

@@ -555,6 +555,7 @@ MonoBehaviour:
       LoseScore: 1
       FastTurnTime: 10
       SlowTurnTime: 20
+  _isUserStart: 1
 --- !u!4 &1177630958
 Transform:
   m_ObjectHideFlags: 0
