@@ -12,6 +12,11 @@ public class GameStarter : MonoBehaviour
     [SerializeField] private Transform _boardParent;
     [SerializeField] private GameUI _ui;
 
+    // GamaData is a class contains data for the game to run, including bot times and scoring data.
+    // It is currently configured as requested in the instructions but can be modified.
+    // We can have a wide selection of GameData objects.
+    // For example, game data with faster bot times for QA, or lower score target to check end game scenarios.
+    // The game data object is injected into the game manager and from there to the internal components, meanning we can change it from here without interfering with the internal classes.
     [SerializeField] private GameData _gameData;
     [SerializeField] private bool _isUserStart = true;
 

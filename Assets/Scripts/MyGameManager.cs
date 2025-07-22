@@ -29,7 +29,6 @@ public class MyGameManager : IGameManager
 
     public const string BOARD_VIEW_ADDRESSABLES_KEY = "Assets/Prefabs/Board.prefab";
 
-
     public MyGameManager(Transform boardParent, CancellationToken cancellationToken, GameData gameData)
     {
         _boardParent = boardParent;
