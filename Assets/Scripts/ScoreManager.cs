@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class ScoreSystem
+public class ScoreManager
 {
     private const int WIN_MIN_SCORE = 50;
     private const int WIN_MAX_SCORE = 100;
@@ -18,12 +18,12 @@ public class ScoreSystem
     private float _turnStartTime;
 
 
-    public ScoreSystem(List<float> reactionTimes)
+    public ScoreManager(List<float> reactionTimes)
     {
         _reactionTimes = reactionTimes;
     }
 
-    public ScoreSystem()
+    public ScoreManager()
     {
     }
 

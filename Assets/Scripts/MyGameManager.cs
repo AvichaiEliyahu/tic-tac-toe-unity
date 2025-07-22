@@ -14,7 +14,7 @@ public class MyGameManager : IGameManager
     private BoardView _boardView;
     private Transform _boardParent;
 
-    private ScoreSystem _scoreSystem;
+    private ScoreManager _scoreManager;
     private PlayerManager _playerManager;
     private SaveManager _saveManager;
 
@@ -46,7 +46,7 @@ public class MyGameManager : IGameManager
         IsGameInProgress = true;
         _boardModel = new BoardModel(GameConsts.BOARD_SIZE);
         _playerManager = new PlayerManager();
-        _scoreSystem = new ScoreSystem();
+        _scoreManager = new ScoreManager();
 
         TryClearPrevBoard();
 
@@ -56,10 +56,11 @@ public class MyGameManager : IGameManager
         SaveGame();
     }
 
+    #region Save and Load
     private async UniTask LoadFromSave(GameSaveData data)
     {
         _boardModel = new BoardModel(data.BoardSize, data.Get2DBoard());
-        _scoreSystem = new ScoreSystem(data.ReactionTimes);
+        _scoreManager = new ScoreManager(data.ReactionTimes);
         _playerManager = new PlayerManager();
         _playerManager.InitializePlayers(data.PlayerMark == CellState.PlayerX);
         TryClearPrevBoard();
@@ -71,13 +72,13 @@ public class MyGameManager : IGameManager
     private void SaveGame(int addScore = 0)
     {
         var currentSave = _saveManager.GetSaveData() ?? new GameSaveData();
-        var newData = new GameSaveData(_boardModel, IsGameInProgress, _playerManager.CurrentMark, CellState.PlayerX, _scoreSystem.GetCurrentReactionTimes())
+        var newData = new GameSaveData(_boardModel, IsGameInProgress, _playerManager.CurrentMark, CellState.PlayerX, _scoreManager.GetCurrentReactionTimes())
         {
             TotalScore = currentSave.TotalScore + addScore
         };
         _saveManager.Save(newData);
     }
-
+    #endregion
     #region New Game Initialization
     private void TryClearPrevBoard()
     {
@@ -123,9 +124,9 @@ public class MyGameManager : IGameManager
         }
         else
         {
-            _scoreSystem.StartTurn();
+            _scoreManager.StartTurn();
             var move = await _boardView.WaitForPress(availableCells);
-            _scoreSystem.EndTurn();
+            _scoreManager.EndTurn();
             return move;
         }
     }
@@ -139,7 +140,7 @@ public class MyGameManager : IGameManager
             if (result != GameResult.None)
             {
                 IsGameInProgress = false;
-                _gameScore = _scoreSystem.CalcFinalScore(result);
+                _gameScore = _scoreManager.CalcFinalScore(result);
                 
                 SaveGame(_gameScore);
                 OnGameOver?.Invoke();

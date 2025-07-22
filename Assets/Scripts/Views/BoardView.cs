@@ -1,4 +1,3 @@
-using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -6,6 +5,9 @@ using UnityEngine.UI;
 
 public class BoardView : MonoBehaviour
 {
+    private const string X_SPRITE_ADDRESSABLE_KEY = "Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_1]";
+    private const string O_SPRITE_ADDRESSABLE_KEY = "Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_2]";
+    private const string EMPTY_SPRITE_ADDRESSABLE_KEY = "Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_4]";
     [SerializeField] private GridLayoutGroup _grid;
     [SerializeField] private AssetReferenceT<GameObject> _cellPrefab;
     
@@ -13,8 +15,6 @@ public class BoardView : MonoBehaviour
     private Sprite _spriteX;
     private Sprite _spriteO;
     private Sprite _spriteEmptyCell;
-
-    private event Action<CellView> _onCellClicked;
 
     public async UniTask InitializeAsync()
     {
@@ -82,6 +82,7 @@ public class BoardView : MonoBehaviour
         {
             Addressables.ReleaseInstance(child.gameObject);
         }
+        ReleaseSprites();
     }
 
     private void InitializeGridLayoutGroup(int size)
@@ -107,11 +108,15 @@ public class BoardView : MonoBehaviour
 
     private async UniTask LoadSprites()
     {
-        _spriteX = await AddressablesLoader.LoadSpriteAsync("Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_1]");
-        _spriteO = await AddressablesLoader.LoadSpriteAsync("Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_2]");
-        _spriteEmptyCell = await AddressablesLoader.LoadSpriteAsync("Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_4]");
+        _spriteX = await AddressablesLoader.LoadSpriteAsync(X_SPRITE_ADDRESSABLE_KEY);
+        _spriteO = await AddressablesLoader.LoadSpriteAsync(O_SPRITE_ADDRESSABLE_KEY);
+        _spriteEmptyCell = await AddressablesLoader.LoadSpriteAsync(EMPTY_SPRITE_ADDRESSABLE_KEY);
     }
 
-    public CellView GetCell(Vector2Int position) => _cells[position.x, position.y];
-
+    private void ReleaseSprites()
+    {
+        AddressablesLoader.ReleaseSprite(X_SPRITE_ADDRESSABLE_KEY);
+        AddressablesLoader.ReleaseSprite(O_SPRITE_ADDRESSABLE_KEY);
+        AddressablesLoader.ReleaseSprite(EMPTY_SPRITE_ADDRESSABLE_KEY);
+    }
 }
