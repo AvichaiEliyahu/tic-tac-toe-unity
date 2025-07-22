@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using PlayPerfect;
 using UnityEngine;
@@ -19,11 +20,13 @@ public class MyGameManager : IGameManager
     private SaveManager _saveManager;
 
     private int _gameScore;
+    private CancellationToken _cancellationToken;
 
-    public MyGameManager(Transform boardParent)
+    public MyGameManager(Transform boardParent, CancellationToken cancellationToken)
     {
         _boardParent = boardParent;
         _saveManager = new SaveManager();
+        _cancellationToken = cancellationToken;
     }
 
     public int GetFinalScore()
@@ -35,10 +38,10 @@ public class MyGameManager : IGameManager
     {
         if (_saveManager.HasSavedgameInProgress())
         {
-            await LoadFromSave(_saveManager.GetSaveData());
+            await LoadFromSave(_saveManager.GetSaveData()).AttachExternalCancellation(_cancellationToken);
             return;
         }
-        await StartNewGame(isUserFirstTurn);
+        await StartNewGame(isUserFirstTurn).AttachExternalCancellation(_cancellationToken);
     }
 
     private async UniTask StartNewGame(bool? isUserFirstTurn)
@@ -50,7 +53,7 @@ public class MyGameManager : IGameManager
 
         TryClearPrevBoard();
 
-        await InitializeNewBoard();
+        await InitializeNewBoard().AttachExternalCancellation(_cancellationToken);
 
         InitializePlayers(isUserFirstTurn);
         SaveGame();
@@ -64,7 +67,7 @@ public class MyGameManager : IGameManager
         _playerManager = new PlayerManager();
         _playerManager.InitializePlayers(data.PlayerMark == CellState.PlayerX);
         TryClearPrevBoard();
-        await InitializeNewBoard();
+        await InitializeNewBoard().AttachExternalCancellation(_cancellationToken);
         _boardView.DrawBoard(_boardModel.Cells);
         IsGameInProgress = true;
     }
@@ -93,9 +96,9 @@ public class MyGameManager : IGameManager
 
     private async UniTask InitializeNewBoard()
     {
-        var boardGo = await Addressables.InstantiateAsync(GameConsts.BOARD_VIEW_ADDRESSABLES_KEY, _boardParent);
+        var boardGo = await Addressables.InstantiateAsync(GameConsts.BOARD_VIEW_ADDRESSABLES_KEY, _boardParent).WithCancellation(_cancellationToken);
         _boardView = boardGo.GetComponent<BoardView>();
-        await _boardView.InitializeAsync();
+        await _boardView.InitializeAsync().AttachExternalCancellation(_cancellationToken);
     }
 
     private void InitializePlayers(bool? isUserFirstTurn)
@@ -110,7 +113,7 @@ public class MyGameManager : IGameManager
     {
         var availableCells = _boardModel.GetAvailableCells();
 
-        var move = await WaitForMove(availableCells);
+        var move = await WaitForMove(availableCells).AttachExternalCancellation(_cancellationToken);
         UpdateModelBasedOnMove(move);
         SaveGame();
     }
@@ -120,12 +123,12 @@ public class MyGameManager : IGameManager
     {
         if (_playerManager.CurrentPlayer is BotPlayer)
         {
-            return await _playerManager.CurrentPlayer.PlayAsync(availableCells);
+            return await _playerManager.CurrentPlayer.PlayAsync(availableCells).AttachExternalCancellation(_cancellationToken);
         }
         else
         {
             _scoreManager.StartTurn();
-            var move = await _boardView.WaitForPress(availableCells);
+            var move = await _boardView.WaitForPress(availableCells).AttachExternalCancellation(_cancellationToken);
             _scoreManager.EndTurn();
             return move;
         }

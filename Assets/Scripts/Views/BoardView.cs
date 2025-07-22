@@ -1,3 +1,5 @@
+using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -72,8 +74,7 @@ public class BoardView : MonoBehaviour
                 _cells[x, y].SetInteractable(availableCells[x, y]);
                 _cells[x, y].SetClickCallback(availableCells[x,y] ? OnCellClicked : null);
             }
-
-        return await tcs.Task;
+        return await tcs.Task.AttachExternalCancellation(gameObject.GetCancellationTokenOnDestroy());
     }
 
     public void DestroyBoard()
@@ -108,9 +109,9 @@ public class BoardView : MonoBehaviour
 
     private async UniTask LoadSprites()
     {
-        _spriteX = await AddressablesLoader.LoadSpriteAsync(X_SPRITE_ADDRESSABLE_KEY);
-        _spriteO = await AddressablesLoader.LoadSpriteAsync(O_SPRITE_ADDRESSABLE_KEY);
-        _spriteEmptyCell = await AddressablesLoader.LoadSpriteAsync(EMPTY_SPRITE_ADDRESSABLE_KEY);
+        _spriteX = await AddressablesLoader.LoadSpriteAsync(X_SPRITE_ADDRESSABLE_KEY).AttachExternalCancellation(gameObject.GetCancellationTokenOnDestroy());
+        _spriteO = await AddressablesLoader.LoadSpriteAsync(O_SPRITE_ADDRESSABLE_KEY).AttachExternalCancellation(gameObject.GetCancellationTokenOnDestroy());
+        _spriteEmptyCell = await AddressablesLoader.LoadSpriteAsync(EMPTY_SPRITE_ADDRESSABLE_KEY).AttachExternalCancellation(gameObject.GetCancellationTokenOnDestroy());
     }
 
     private void ReleaseSprites()
