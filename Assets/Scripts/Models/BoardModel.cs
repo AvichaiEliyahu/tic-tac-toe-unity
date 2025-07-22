@@ -1,6 +1,9 @@
 public enum CellState { Empty, PlayerX, PlayerO}
 public enum GameResult { None, Win, Lose, Draw}
 
+/// <summary>
+/// Board model
+/// </summary>
 public class BoardModel
 {
     private readonly int _size;
@@ -21,16 +24,24 @@ public class BoardModel
         Cells = cellStates;
     }
 
-    public CellState GetCellState(int x, int y)
-    {
-        return Cells[x, y];
-    }
-
+    /// <summary>
+    /// Checking whether or not a cell is empty.
+    /// </summary>
+    /// <param name="x">X coordinate of the cell</param>
+    /// <param name="y">Y coordinate of the cell</param>
+    /// <returns>true if the cell is empty, flase otherwise</returns>
     public bool IsCellEmpty(int x, int y)
     {
         return Cells[x, y] == CellState.Empty;
     }
 
+    /// <summary>
+    /// Places a give mark on a given cell
+    /// </summary>
+    /// <param name="x">X coordinate of the cell</param>
+    /// <param name="y">Y coordinate of the cell</param>
+    /// <param name="state">New state for the cell</param>
+    /// <returns>True if placement succeeded, false otherwise</returns>
     public bool PlaceMarkOnCell(int x, int y, CellState state)
     {
         if (!(IsCellEmpty(x, y)))
@@ -41,6 +52,10 @@ public class BoardModel
         return true;
     }
 
+    /// <summary>
+    /// Get all available cells
+    /// </summary>
+    /// <returns>Matrix of booleans that indicate availability of each cell</returns>
     public bool[,] GetAvailableCells()
     {
         var available = new bool[_size, _size];
@@ -54,6 +69,9 @@ public class BoardModel
         return available;
     }
 
+    /// <summary>
+    /// Clears the board model
+    /// </summary>
     private void ClearBoard()
     {
         for (int x = 0; x < _size; x++)
@@ -61,7 +79,13 @@ public class BoardModel
                 Cells[x, y] = CellState.Empty;
     }
 
-    public GameResult CheckGameResult(CellState humanMark, out CellState winner)
+    /// <summary>
+    /// Check the game result according to the current board state
+    /// </summary>
+    /// <param name="check">mark to check if won</param>
+    /// <param name="winner">winning mark, if any</param>
+    /// <returns>The result of the game according to the check mark and the winning mark</returns>
+    public GameResult CheckGameResult(CellState check, out CellState winner)
     {
         winner = CellState.Empty;
 
@@ -83,7 +107,7 @@ public class BoardModel
                 if (rowWin)
                 {
                     winner = Cells[i, 0];
-                    return winner == humanMark ? GameResult.Win : GameResult.Lose;
+                    return winner == check ? GameResult.Win : GameResult.Lose;
                 }
             }
 
@@ -102,7 +126,7 @@ public class BoardModel
                 if (colWin)
                 {
                     winner = Cells[0, i];
-                    return winner == humanMark ? GameResult.Win : GameResult.Lose;
+                    return winner == check ? GameResult.Win : GameResult.Lose;
                 }
             }
         }
@@ -122,7 +146,7 @@ public class BoardModel
             if (diagWin)
             {
                 winner = Cells[0, 0];
-                return winner == humanMark ? GameResult.Win : GameResult.Lose;
+                return winner == check ? GameResult.Win : GameResult.Lose;
             }
         }
 
@@ -141,7 +165,7 @@ public class BoardModel
             if (antiDiagWin)
             {
                 winner = Cells[0, _size - 1];
-                return winner == humanMark ? GameResult.Win : GameResult.Lose;
+                return winner == check ? GameResult.Win : GameResult.Lose;
             }
         }
 

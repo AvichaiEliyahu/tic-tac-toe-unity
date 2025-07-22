@@ -1,5 +1,8 @@
 using Cysharp.Threading.Tasks;
 
+/// <summary>
+/// Player implementation for a human player. Waits for cell selection from board.
+/// </summary>
 public class HumanPlayer : IPlayer, IRecordablePlayer
 {
     private BoardView _boardView;

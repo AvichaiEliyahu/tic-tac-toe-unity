@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+/// <summary>
+/// Class for managing the game score according to the instructions
+/// </summary>
 public class ScoreManager
 {
     private const int WIN_MIN_SCORE = 50;
@@ -27,17 +30,29 @@ public class ScoreManager
     {
     }
 
+    /// <summary>
+    /// Records the time when the turn starts.
+    /// </summary>
     public void StartTurn()
     {
         _turnStartTime = Time.time;
     }
 
+    /// <summary>
+    /// Records the time when the turn ends and add the total time to the reaction times list.
+    /// </summary>
     public void EndTurn()
     {
         var turnDuration = Time.time - _turnStartTime;
         _reactionTimes.Add(turnDuration);
     }
 
+    /// <summary>
+    /// Calculates the total score based on the game result and the data recorded in the reaction times list
+    /// </summary>
+    /// <param name="result">game result, according to which the score is calculated</param>
+    /// <returns>Total score</returns>
+    /// <exception cref="ArgumentOutOfRangeException">For illegal game result type</exception>
     public int CalcFinalScore(GameResult result)
     {
         var averageReactionTime = _reactionTimes.Count > 0 ? _reactionTimes.Average() : 0;
@@ -63,6 +78,10 @@ public class ScoreManager
         return Mathf.RoundToInt(Mathf.Lerp(minScore, maxScore, t));
     }
 
+    /// <summary>
+    /// Rerturns the list of reaction times.
+    /// </summary>
+    /// <returns></returns>
     public List<float> GetCurrentReactionTimes()
     {
         return _reactionTimes;

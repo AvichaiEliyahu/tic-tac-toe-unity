@@ -2,6 +2,9 @@ using Cysharp.Threading.Tasks;
 
 namespace PlayPerfect
 {
+    /// <summary>
+    /// Game manager interface
+    /// </summary>
     public interface IGameManager
     {
         /// <summary>

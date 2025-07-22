@@ -5,6 +5,10 @@ using PlayPerfect;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
+/// <summary>
+/// Game manager implamantation for the Tic-Tac-Toe game.
+/// Also the main controller which controlls the other sub-managers (score, save, players)
+/// </summary>
 public class MyGameManager : IGameManager
 {
     public bool IsGameInProgress { get; private set; }
@@ -22,6 +26,9 @@ public class MyGameManager : IGameManager
     private int _gameScore;
     private CancellationToken _cancellationToken;
 
+    public const string BOARD_VIEW_ADDRESSABLES_KEY = "Assets/Prefabs/Board.prefab";
+
+
     public MyGameManager(Transform boardParent, CancellationToken cancellationToken)
     {
         _boardParent = boardParent;
@@ -29,11 +36,20 @@ public class MyGameManager : IGameManager
         _cancellationToken = cancellationToken;
     }
 
+    /// <summary>
+    /// returns the game final score
+    /// </summary>
+    /// <returns>Final score</returns>
     public int GetFinalScore()
     {
         return _gameScore;
     }
 
+    /// <summary>
+    /// Starts a game, will try to load a save file first.
+    /// </summary>
+    /// <param name="isUserFirstTurn">Does the user start?</param>
+    /// <returns>Awaitable UniTask</returns>
     public async UniTask LoadNewGameAsync(bool? isUserFirstTurn = null)
     {
         await InitializeNewBoard().AttachExternalCancellation(_cancellationToken);
@@ -59,7 +75,10 @@ public class MyGameManager : IGameManager
     }
 
     #region Save
-
+    /// <summary>
+    /// Saves the game using the save manager
+    /// </summary>
+    /// <param name="addScore">Optional parameter if a score needs to be added, can be used to add score mid game or at the end game.</param>
     private void SaveGame(int addScore = 0)
     {
         var currentSave = _saveManager.GetSaveData() ?? new GameSaveData();
@@ -72,6 +91,9 @@ public class MyGameManager : IGameManager
     #endregion
 
     #region New Game Initialization
+    /// <summary>
+    /// Try to clear the board if exists so that a new fresh board can be loaded
+    /// </summary>
     private void TryClearPrevBoard()
     {
         if (_boardView == null)
@@ -83,22 +105,23 @@ public class MyGameManager : IGameManager
         GameObject.Destroy(_boardView.gameObject);
     }
 
+    /// <summary>
+    /// Instantiates a new board
+    /// </summary>
+    /// <returns>Awaitable UniTask</returns>
     private async UniTask InitializeNewBoard()
     {
         TryClearPrevBoard();
-        var boardGo = await Addressables.InstantiateAsync(GameConsts.BOARD_VIEW_ADDRESSABLES_KEY, _boardParent).WithCancellation(_cancellationToken);
+        var boardGo = await Addressables.InstantiateAsync(BOARD_VIEW_ADDRESSABLES_KEY, _boardParent).WithCancellation(_cancellationToken);
         _boardView = boardGo.GetComponent<BoardView>();
-        await _boardView.InitializeAsync().AttachExternalCancellation(_cancellationToken);
+        await _boardView.InitializeAsync(GameConsts.BOARD_SIZE).AttachExternalCancellation(_cancellationToken);
     }
-
-    private void InitializePlayers(bool? isUserFirstTurn)
-    {
-        bool humanStarts = isUserFirstTurn ?? UnityEngine.Random.value > 0.5;
-        _playerManager.InitializePlayers(humanStarts);
-    }
-
     #endregion
 
+    /// <summary>
+    /// Waiting for the current player to play the turn
+    /// </summary>
+    /// <returns>Awaitable UniTask</returns>
     public async UniTask WaitForPlayerTurn()
     {
         var availableCells = _boardModel.GetAvailableCells();
@@ -111,6 +134,9 @@ public class MyGameManager : IGameManager
         SaveGame();
     }
 
+    /// <summary>
+    /// Start recording turn time for player if needed
+    /// </summary>
     private void TryStartTurnRecording()
     {
         if(_playerManager.CurrentPlayer is IRecordablePlayer)
@@ -119,6 +145,9 @@ public class MyGameManager : IGameManager
         }
     }
 
+    /// <summary>
+    /// End recording of turn time for player if needed.
+    /// </summary>
     private void TryEndTurnRecording()
     {
         if(_playerManager.CurrentPlayer is IRecordablePlayer)
@@ -128,7 +157,10 @@ public class MyGameManager : IGameManager
     }
 
     #region Play Turn
-
+    /// <summary>
+    /// Update the model based on the latest move.
+    /// </summary>
+    /// <param name="move">newly selected cell</param>
     private void UpdateModelBasedOnMove((int x, int y) move)
     {
         if (_boardModel.PlaceMarkOnCell(move.x, move.y, _playerManager.CurrentMark))
@@ -149,6 +181,9 @@ public class MyGameManager : IGameManager
         }
     }
 
+    /// <summary>
+    /// Total score
+    /// </summary>
     public int TotalScore => _saveManager?.GetSaveData()?.TotalScore ?? 0;
 
     #endregion

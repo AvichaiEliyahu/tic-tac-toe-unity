@@ -1,10 +1,11 @@
-using System;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 
+/// <summary>
+/// Class that handles the board view.
+/// </summary>
 public class BoardView : MonoBehaviour
 {
     private const string X_SPRITE_ADDRESSABLE_KEY = "Assets/Sprites/TicTacToeAssets.png[TicTacToeAssets_1]";
@@ -18,18 +19,25 @@ public class BoardView : MonoBehaviour
     private Sprite _spriteO;
     private Sprite _spriteEmptyCell;
 
-    public async UniTask InitializeAsync()
+    /// <summary>
+    /// Initialize the board.
+    /// </summary>
+    /// <returns></returns>
+    public async UniTask InitializeAsync(int boardSize)
     {
-        int size = GameConsts.BOARD_SIZE;
-        _cells = new CellView[size, size];
+        _cells = new CellView[boardSize, boardSize];
 
-        InitializeGridLayoutGroup(size);
+        InitializeGridLayoutGroup(boardSize);
         await UniTask.WhenAll(
-            InitializeCells(size),
+            InitializeCells(boardSize),
             LoadSprites()
             );
     }
 
+    /// <summary>
+    /// Draw the board based on the given cells data
+    /// </summary>
+    /// <param name="cells">Cells data</param>
     public void DrawBoard(CellState[,] cells)
     {
         int sizeX = cells.GetLength(0);
@@ -51,6 +59,11 @@ public class BoardView : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Wait for human interaction.
+    /// </summary>
+    /// <param name="availableCells">Availble cells from which the user can select.</param>
+    /// <returns>Awaitable UniTask, completes upon user press</returns>
     public async UniTask<(int x, int y)> WaitForPress(bool[,] availableCells)
     {
         var tcs = new UniTaskCompletionSource<(int x, int y)>();
@@ -77,6 +90,9 @@ public class BoardView : MonoBehaviour
         return await tcs.Task.AttachExternalCancellation(gameObject.GetCancellationTokenOnDestroy());
     }
 
+    /// <summary>
+    /// Release addressables before destroying the board object.
+    /// </summary>
     public void DestroyBoard()
     {
         foreach(Transform child in _grid.transform)
@@ -86,12 +102,21 @@ public class BoardView : MonoBehaviour
         ReleaseSprites();
     }
 
+    /// <summary>
+    /// Initialization for the GridLayoutGroup
+    /// </summary>
+    /// <param name="size">Grid size</param>
     private void InitializeGridLayoutGroup(int size)
     {
         _grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
         _grid.constraintCount = size;
     }
 
+    /// <summary>
+    /// Handles cells instantiation and initialization
+    /// </summary>
+    /// <param name="size"></param>
+    /// <returns></returns>
     private async UniTask InitializeCells(int size)
     {
         for (int y = 0; y < size; y++)
@@ -107,6 +132,10 @@ public class BoardView : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Load sprites from addressables
+    /// </summary>
+    /// <returns></returns>
     private async UniTask LoadSprites()
     {
         _spriteX = await AddressablesLoader.LoadSpriteAsync(X_SPRITE_ADDRESSABLE_KEY).AttachExternalCancellation(gameObject.GetCancellationTokenOnDestroy());
@@ -114,6 +143,9 @@ public class BoardView : MonoBehaviour
         _spriteEmptyCell = await AddressablesLoader.LoadSpriteAsync(EMPTY_SPRITE_ADDRESSABLE_KEY).AttachExternalCancellation(gameObject.GetCancellationTokenOnDestroy());
     }
 
+    /// <summary>
+    /// Release sprites loaded from addressables
+    /// </summary>
     private void ReleaseSprites()
     {
         AddressablesLoader.ReleaseSprite(X_SPRITE_ADDRESSABLE_KEY);
